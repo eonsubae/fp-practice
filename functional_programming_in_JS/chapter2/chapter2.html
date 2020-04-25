@@ -1,0 +1,306 @@
+<html>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ramda/0.25.0/ramda.min.js"></script>
+<script>
+  class Person {
+    constructor(firstname, lastname, ssn) {
+      this._firstname =firstname ;
+      this._lastname = lastname;
+      this._ssn = ssn;
+      this._address = null;
+      this._birthYear = null;
+    }
+
+    get ssn() {
+      return this._ssn;
+    }
+
+    get firstname() {
+      return this._firstname;
+    }
+
+    set firstname(firstname) {
+		  this._firstname = firstname;
+		  return this;
+	  }
+
+    get lastname() {
+      return this._lastname;
+    }
+
+    get address() {
+      return this._address;
+    }
+
+    get birthYear() {
+      return this._birthYear;
+    }
+
+    set birthYear(year) {
+      this._birthYear = year;
+    }
+
+    set address(addr) {
+      this._address = addr;
+    }
+
+    toString() {
+      return `Person(${this._firstname}, ${this._lastname})`;
+    }
+
+    peopleInSameCountry(friends) {
+      var result = [];
+      for (let idx in friends) {
+        var friend = friends[idx];
+        if (this.address.country === friend.address.country) {
+          result.push(friend);
+        }
+      }
+      return result;
+    };
+  }
+
+  class Student extends Person {
+    constructor(firstname, lastname, ssn, school) {
+      super(firstname, lastname, ssn);
+      this._school = school;
+    }
+
+    get school() {
+      return this._school;
+    }
+
+    studentInSameCountryAndSchool(friends) {
+      var closedFriends = super.peopleInSameCountry(friends);
+      var result = [];
+      for (let idx in closedFriends) {
+        var friend = closedFriends[idx];
+        if (friend.school === this.school) {
+          result.push(friend);
+        }
+      }
+      return result;
+    };
+  }
+
+  class Address {
+	/**
+	 * Construct a new address object
+	 * @param country Country code (required)
+	 * @param state State code 
+	 * @param city City name
+	 * @param zip Zip code value object instance  
+	 * @param street Street name
+	 *
+	 */
+	  constructor(country, state = null, city = null, zip = null, street = null) {
+	  	this._country = country;
+	  	this._state = state;
+	  	this._city = city;
+	  	this._zip = zip;
+	  	this._street = street;
+	  }
+	  
+	  get street() {
+	  	return this._street;
+	  }
+  
+	  get city() {
+	  	return this._city;
+	  }
+  
+	  get state() {
+	  	return this._state;
+	  }
+	  
+	  get zip() {
+	  	return this._zip;
+	  }
+	  
+	  get country() {
+	  	return this._country;
+	  }
+  
+	  set country(country) {
+	  	this._country = country;
+	  	return this;
+	  }
+  };
+  /*
+  var curry = new Student('Haskell', 'Curry', '111-11-1111', 'Penn State');
+  curry.address = new Address('US');
+
+  var turing = new Student('Alan', 'Turing', '222-22-2222', 'Princeton');
+  turing.address = new Address('England');
+
+  var church = new Student('Alonzo', 'Church', '333-33-3333', 'Princeton');
+  church.address = new Address('US');
+
+  var kleene = new Student('Stephen', 'Kleene', '444-44-4444', 'Princeton');
+  kleene.address = new Address('US');
+
+  church.studentInSameCountryAndSchool([curry, turing, kleene]);
+
+  var selector = (country, school) =>
+    (student) =>
+      student.address.country === country &&
+      student.school === school;
+
+  var findStudentBy = (friends, selector) =>
+    friends.filter(selector);
+
+  findStudentBy([curry, turing, church, kleene],
+    selector('US', 'Princeton')
+  ); */
+
+  function zipCode(code, location) {
+    let _code = code;
+    let _location = location || '';
+
+    return {
+      code: function() {
+        return _code;
+      },
+      location: function() {
+        return _location;
+      },
+      fromString: function(str) {
+        let parts = str.split('-');
+        return zipCode(parts[0], parts[1]);
+      },
+      toString: function() {
+        return _code + '-' + _location;
+      }
+    };
+  }
+  
+  // const princetonZip = zipCode('08544', '3345');
+  // princetonZip.toString(); 
+
+  function coordinate(lat, long) {
+    let _lat = lat;
+    let _long = long;
+
+    return {
+      latitude: function () {
+        return _lat;
+      },
+      longitude: function () {
+        return _long;
+      },
+      translate: function (dx, dy) {
+        return coordinate(_lat + dx, _long + dy);
+      },
+      toString: function () {
+        return '(' + _lat + ',' + _long + ')';
+      }
+    };
+  };
+
+  // const greenwich = coordinate(51.4778, 0.0015);
+  // greenwich.toString();
+  // greenwich.translate(10, 10).toString();
+
+  // const person = Object.freeze(new Person('Haskell', 'Curry', '444-44-4444'));
+  // person.firstname = 'Bob';
+
+  var isObject = val => val && typeof val === 'object';
+
+  function deepFreeze(obj) {
+    if (isObject(obj)
+      && !Object.isFrozen(obj)) {
+    
+      Object.keys(obj).
+        forEach(name => deepFreeze(obj[name]));
+
+      Object.freeze(obj);
+    }
+    return obj;
+  }
+  
+  /*
+  var person = new Person('Haskell', 'Curry', '444-44-4444');
+  person.address = new Address(
+    'US', 'NJ', 'Princeton',
+    zipCode('08544', '1234'), 'Alexander St.');
+  
+  person = Object.freeze(person);
+
+  person.address._country = 'France'; // 허용
+  person.address.country; // France */
+
+  /*
+  var person = new Person('Alonzo', 'Church', '444-44-4444');
+  // var lastnameLens = R.lensProp('lastname');
+  // const newPerson = R.set(lastnameLens, 'Mourning', person);
+  // R.view(lastnameLens, person); // Church
+  // R.view(lastnameLens, newPerson); // Mourning 
+
+  person.address = new Address(
+    'US', 'NJ', 'Princeton', zipCode('08544', '1234'),
+    'Alexander St.');
+
+  const zipPath = ['address', 'zip'];
+  const zipLens = R.lens(R.path(zipPath), R.assocPath(zipPath)); // 게터, 세터 정의
+  R.view(zipLens, person); // zipCode('08544', '1234')
+
+  var newPerson = R.set(zipLens, zipCode('90210', '5678'), person);
+  var newZip = R.view(zipLens, newPerson); // zipCode('90210', '5678')
+  var originalZip = R.view(zipLens, person); // zipCode('08544', '1234')
+  newZip.toString() !== originalZip.toString(); // true */
+
+  /*
+  function printPeopleInTheUs(people) {
+    for (let i = 0; i < people.length; i++) {
+      var thisPerson = people[i];
+      if (thisPerson.address.country === 'US') {
+        console.log(thisPerson);
+      }
+    }
+  }*/
+
+  var curry = new Student('Haskell', 'Curry', '111-11-1111', 'Penn State');
+  curry.address = new Address('US');
+
+  var turing = new Student('Alan', 'Turing', '222-22-2222', 'Princeton');
+  turing.address = new Address('England');
+
+  var church = new Student('Alonzo', 'Church', '333-33-3333', 'Princeton');
+  church.address = new Address('US');
+
+  var kleene = new Student('Stephen', 'Kleene', '444-44-4444', 'Princeton');
+  kleene.address = new Address('US');
+
+  // printPeopleInTheUs([curry, turing, church, kleene]); // curry, church, kleene
+
+  /*
+  function printPeople(people, action) {
+    for (let i = 0; i < people.length; i++) {
+      action(people[i]);
+    }
+  }*/
+
+  function printPeople(people, selector, printer) {
+    people.forEach(function (person) {
+      if (selector(person)) {
+        printer(person);
+      }
+    })
+  }
+
+  const inUs = person => person.address.country === 'US';
+
+  function action(person) {
+    if (person.address.country === 'US') {
+      console.log(person);
+    }
+  }
+
+  const people = [curry, turing, church, kleene];
+
+  // printPeople(people, action);
+
+  printPeople(people, inUs, console.log);
+</script>    
+</body>
+</html>
