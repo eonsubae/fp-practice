@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+<script src="../node_modules/lodash/lodash.js"></script>
+<script src="../node_modules/ramda/dist/ramda.min.js"></script>
+<script>
+  // 'Functional Programming'.substring(0, 10).toLowerCase() + ' is fun';
+  // concat(toLowerCase(substring('Functional Programming', 1, 10))),' is fun');
+
+  // var result = [];
+  // var persons = [p1, p2, p3, p4];
+  
+  // for (let i = 0; i < persons.length; i++) {
+  //   var p = persons[i];
+  //   if (p !== null && p !== undefined) {
+  //     result.push(p.fullname);
+  //   }
+  // }
+
+  class Person {
+    constructor(firstname, lastname, ssn) {
+      this._firstname =firstname ;
+      this._lastname = lastname;
+      this._ssn = ssn;
+      this._address = null;
+      this._birthYear = null;
+    }
+
+    get ssn() {
+      return this._ssn;
+    }
+
+    get firstname() {
+      return this._firstname;
+    }
+
+    set firstname(firstname) {
+		  this._firstname = firstname;
+		  return this;
+	  }
+
+    get lastname() {
+      return this._lastname;
+    }
+
+    get fullname() {
+		  return `${this._firstname} ${this._lastname}`;  
+	  }
+
+    get address() {
+      return this._address;
+    }
+
+    get birthYear() {
+      return this._birthYear;
+    }
+
+    set birthYear(year) {
+      this._birthYear = year;
+    }
+
+    set address(addr) {
+      this._address = addr;
+    }
+
+    toString() {
+      return `Person(${this._firstname}, ${this._lastname})`;
+    }
+
+    peopleInSameCountry(friends) {
+      var result = [];
+      for (let idx in friends) {
+        var friend = friends[idx];
+        if (this.address.country === friend.address.country) {
+          result.push(friend);
+        }
+      }
+      return result;
+    };
+  }
+
+  class Address {
+	/**
+	 * Construct a new address object
+	 * @param country Country code (required)
+	 * @param state State code 
+	 * @param city City name
+	 * @param zip Zip code value object instance  
+	 * @param street Street name
+	 *
+	 */
+	  constructor(country, state = null, city = null, zip = null, street = null) {
+	  	this._country = country;
+	  	this._state = state;
+	  	this._city = city;
+	  	this._zip = zip;
+	  	this._street = street;
+	  }
+	  
+	  get street() {
+	  	return this._street;
+	  }
+  
+	  get city() {
+	  	return this._city;
+	  }
+  
+	  get state() {
+	  	return this._state;
+	  }
+	  
+	  get zip() {
+	  	return this._zip;
+	  }
+	  
+	  get country() {
+	  	return this._country;
+	  }
+  
+	  set country(country) {
+	  	this._country = country;
+	  	return this;
+	  }
+  };
+
+  const p1 = new Person('Haskell', 'Curry', '111-11-1111');
+  p1.address = new Address('US');
+  p1.birthYear = 1900;
+
+  const p2 = new Person('Barkley', 'Rosser', '222-22-2222');
+  p2.address = new Address('Greece');
+  p2.birthYear = 1907;
+
+
+  const p3 = new Person('John', 'von Neumann', '333-33-3333');
+  p3.address = new Address('Hungary');
+  p3.birthYear = 1903;
+
+  const p4 = new Person('Alonzo', 'Church', '444-44-4444');
+  p4.address = new Address('US');
+  p4.birthYear = 1903;
+  
+  const p5 = new Person('David', 'Hilbert', '555-55-5555');
+  p5.address = new Address('Germany');
+  p5.birthYear = 1903;
+
+  const p6 = new Person('Alan', 'Turing', '666-66-6666');
+  p6.address = new Address('England');
+  p6.birthYear = 1912;
+
+  const p7 = new Person('Stephen', 'Kleene', '777-77-7777');
+  p7.address = new Address('US');
+  p7.birthYear = 1909;
+  
+  // var result = [];
+  var persons = [p1, p2, p3, p4, p5, p6, p7];
+  
+  // for (let i = 0; i < persons.length; i++) {
+  //   var p = persons[i];
+  //   if (p !== null && p !== undefined) {
+  //     result.push(p.fullname);
+  //   }
+  // }
+
+  // const newPerson = _.map(persons,
+  //   s => (s !== null && s !== undefined) ? s.fullname : ''
+  // );
+
+  // const newPerson2 = _(persons).reverse().map(
+  //   p => (p !== null && p !== undefined) ? p.fullname : ''
+  // );
+
+  // console.log(newPerson);
+  // console.log(newPerson2);
+
+  function reduce(arr, fn, accumulator) {
+    let idx = -1,
+        len = arr.length;
+
+    if (!accumulator && len > 0) {
+      accumulator = arr[++idx];
+    }
+
+    while (++idx < len) {
+      accumulator = fn(accumulator, arr[idx], idx, arr);
+    }
+
+    return accumulator;
+  }
+
+  _(persons).reduce((stat, person) => {
+    const country = person.address.country;
+    stat[country] = _.isUndefined(stat[country]) ? 1 : stat[country] + 1;
+    return stat;
+  }, {});
+
+  const getCountry = person => person.address.country;
+  // const gatherStats = function (stat, criteria) {
+  //   stat[criteria] = _.isUndefined(stat[criteria]) ? 1 : stat[criteria] + 1;
+  //   return stat;
+  // };
+
+  const cityPath = ['address', 'city'];
+  const cityLens = R.lens(R.path(cityPath), R.assocPath(cityPath));
+
+  const isValid = val => !_.isUndefined(val) && !_.isNull(val);
+  const isNotValid = val => _.isUndefined(val) || _.isNull(val);
+  const allValid = args => _(args).every(isValid);
+  const notAllValid = args => _(args).some(isNotValid);
+  
+  allValid(['string', 0, null]); // false
+  allValid(['string', 0, {}]); // true
+  notAllValid(['string', 0, null, undefined]); // true
+  notAllValid(['string', 0, {}]); // false
+
+  const gatherStats = function (stat, country) {
+    if (!isValid(stat[country])) {
+      stat[country] = {'name': country, 'count': 0};
+    }
+    stat[country].count++;
+    return stat;
+  };
+
+  _(persons).map(getCountry).reduce(gatherStats, {});
+  _(persons).map(R.view(cityLens)).reduce(gatherStats, {});
+
+  function filter(arr, predicate) {
+    let idx = -1,
+        len = arr.length,
+        result = [];
+
+    while (++idx < len) {
+      let value = arr[idx];
+      if (predicate(value, idx, this)) {
+        result.push(value);
+      }
+    }
+    return result;
+  }
+
+
+  const bornIn1903 = person => person.birthYear === 1903;
+
+  const fullname = person => person.fullname;
+
+  _(persons).filter(isValid).map(fullname);
+
+  _(persons).filter(bornIn1903).map(fullname).join(' and '); 
+
+  var names = ['alonzo Church', 'Haskell curry', 'stephen_kleene', 'John von Neumann', 'stephen_kleene'];
+
+  var result = [];
+
+  for (let i = 0; i < names.length; i++) {
+    var n = names[i];
+    if (n !== undefined && n !== null) {
+      var ns = n.replace(/_/, ' ').split(' ');
+      for (let j = 0; j < ns.length; j++) {
+        var p = ns[j];
+        p = p.charAt(0).toUpperCase() + p.slice(1);
+        ns[j] = p;
+      }
+      if (result.indexOf(ns.join(' ')) < 0) {
+        result.push(ns.join(' '));
+      }
+    }
+  }
+  result.sort();
+
+  _.chain(names)
+   .filter(isValid)
+   .map(s => s.replace(/_/, ' '))
+   .uniq()
+   .map(_.startCase)
+   .sort()
+   .value();
+
+  _.chain(persons)
+   .filter(isValid)
+   .map(_.property('address.country'))
+   .reduce(gatherStats, {})
+   .values()
+   .sortBy('count')
+   .reverse()
+   .first()
+   .value()
+   .name;
+
+   class Node {
+     constructor(val) {
+       this._val = val;
+       this._parent = null;
+       this._children = [];
+     }
+
+     isRoot() {
+       return isValid(this._parent);
+     }
+
+     get children() {
+       return this._children;
+     }
+
+     hasChildren() {
+       return this._children.length > 0;
+     }
+
+     get value() {
+       return this._val;
+     }
+
+     set value(val) {
+       this._val = val;
+     }
+
+     append(child) {
+       child._parent = this;
+       this._children.push(child);
+       return this;
+     }
+
+     toString() {
+       return `Node (val: ${this._val}, children: ${this._children.length})`;
+     }
+   }
+
+   class Tree {
+     constructor(root) {
+       this._root = root;
+     }
+
+     static map(node, fn, tree = null) {
+       node.value = fn(node.value);
+       if (tree === null) {
+         tree = new Tree(node);
+       }
+
+       if (node.hasChildren()) {
+         _.map(node.children, function (child) {
+           Tree.map(child, fn, tree);
+         });
+       }
+       return tree;
+     }
+
+     get root() {
+       return this._root;
+     }
+   }
+
+   const church = new Node(new Person('Alonzo', 'Church', '111-11-1111')); 
+   const rosser = new Node(new Person('Barkley', 'Rosser', '222-22-2222')); 
+   const turing = new Node(new Person('Alan', 'Turing', '333-33-3333')); 
+   const kleene = new Node(new Person('Stephen', 'Kleene', '444-44-4444')); 
+   const mendelson = new Node(new Person('Elliot', 'Mendelson', '555-55-5555')); 
+   const sacks = new Node(new Person('Gerald', 'Sacks', '666-66-6666')); 
+   const gandy = new Node(new Person('Robin', 'Gandy', '777-77-7777')); 
+   const nelson = new Node(new Person('Nels', 'Nelson', '888-88-8888')); 
+   const constable = new Node(new Person('Robert', 'Constable', '999-99-9999')); 
+
+   church.append(rosser).append(turing).append(kleene);
+   kleene.append(nelson).append(constable);
+   rosser.append(mendelson).append(sacks);
+   turing.append(gandy);
+
+   Tree.map(church, p => p.fullname);
+</script>
+</body>
+</html>
